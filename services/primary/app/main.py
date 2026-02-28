@@ -1,3 +1,5 @@
+import pika
+import json
 from fastapi import FastAPI
 from typing import Dict
 
@@ -6,6 +8,27 @@ app = FastAPI()
 DB: Dict[str, str] = {
     "alice": "PUBLIC"
 }
+
+def publish_event(user: str, visibility: str):
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters("localhost")
+    )
+    channel = connection.channel()
+
+    channel.queue_declare(queue="visibility_events")
+
+    event = {
+        "user": user,
+        "visibility": visibility
+    }
+
+    channel.basic_publish(
+        exchange="",
+        routing_key="visibility_events",
+        body=json.dumps(event)
+    )
+
+    connection.close()
 
 @app.get("/")
 def root():
@@ -24,6 +47,7 @@ def set_visibility(user: str, visibility: str):
         return {"error": "Invalid visibility value"}
     
     DB[user] = visibility
+    publish_event(user, visibility)
     return {
         "message": "Visibility updated",
         "user": user,
