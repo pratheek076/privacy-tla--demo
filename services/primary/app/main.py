@@ -6,7 +6,7 @@ from typing import Dict
 app = FastAPI()
 # In-memory "database"
 DB: Dict[str, str] = {
-    "alice": "PUBLIC"
+    "alice": "PRIVATE"
 }
 
 def publish_event(user: str, visibility: str):
