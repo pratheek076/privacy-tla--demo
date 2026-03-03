@@ -3,10 +3,31 @@ import pika
 import json
 import threading
 import time
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+import httpx
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 CACHE = {}
+
+def load_initial_snapshot():
+    while True:
+        try:
+            response = httpx.get("http://localhost:8000/db/alice")
+            data = response.json()
+            CACHE["alice"] = data["visibility"]
+            print("Cache updated:", CACHE)
+            break
+        except:
+            print("Primary not ready, retrying...")
+            time.sleep(1)
 
 def consume():
     print("Starting RabbitMQ consumer..." )
@@ -22,8 +43,8 @@ def consume():
 
         user = event["user"]
         visibility = event["visibility"]
-        if visibility == "PUBLIC":
-            time.sleep(15)
+        if visibility == "PRIVATE":
+            time.sleep(5)
         else:
             time.sleep(0)
 
@@ -40,13 +61,29 @@ def consume():
 
 @app.on_event("startup")
 def startup_event():
+    load_initial_snapshot()
+
     thread = threading.Thread(target=consume)
     thread.daemon = True
     thread.start()
 
-@app.get("/cache/{user}")
+@app.get("/cache/{user}", response_class=HTMLResponse)
 def get_cache(user: str):
-    visibility = CACHE.get(user)
-    if visibility is None:
-        return {"error": "User not found in cache"}
-    return {"user": user, "visibility": visibility}
+    visibility = CACHE.get(user, "PUBLIC")
+
+    if visibility == "PUBLIC":
+        return """
+        <div id="messageBox">
+            <p class="public">
+                Hello, I am Alice. My message is visible.
+            </p>
+        </div>
+        """
+
+    return """
+    <div id="messageBox">
+        <p class="private">
+            Message is hidden (PRIVATE).
+        </p>
+    </div>
+    """

@@ -2,6 +2,8 @@ import pika
 import json
 from fastapi import FastAPI
 from typing import Dict
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 # In-memory "database"
@@ -30,10 +32,6 @@ def publish_event(user: str, visibility: str):
 
     connection.close()
 
-@app.get("/")
-def root():
-    return {"message": "Primary Service Running"}
-
 @app.get("/db/{user}")
 def get_visibility(user: str):
     visibility = DB.get(user)
@@ -53,3 +51,8 @@ def set_visibility(user: str, visibility: str):
         "user": user,
         "visibility": visibility
     }
+
+@app.get("/", response_class=HTMLResponse)
+def serve_ui():
+    with open("ui/index.html") as f:
+        return f.read()

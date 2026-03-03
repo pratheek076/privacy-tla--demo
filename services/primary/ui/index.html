@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Privacy Demo (HTMX)</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        #messageBox {
+            padding: 15px;
+            border: 2px solid black;
+            margin-top: 20px;
+        }
+        .public { color: green; }
+        .private { color: red; }
+    </style>
+</head>
+<body>
+
+<h1>Eventual Consistency in a Distributed System</h1>
+<h3>User: Alice</h3>
+
+<!-- This section is loaded from cache -->
+<div 
+    hx-get="http://localhost:8001/cache/alice"
+    hx-trigger="load, every 2s"
+    hx-swap="innerHTML"
+>
+    Loading visibility...
+</div>
+
+<br>
+
+<button 
+    hx-post="/set_visibility/alice/PUBLIC"
+    hx-trigger="click"
+    hx-swap="none"
+>
+    Make Public
+</button>
+
+<button 
+    hx-post="/set_visibility/alice/PRIVATE"
+    hx-trigger="click"
+    hx-swap="none"
+>
+    Make Private
+</button>
+
+</body>
+</html>
