@@ -8,19 +8,19 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 CACHE = {}
 
 def load_initial_snapshot():
     while True:
         try:
-            response = httpx.get("http://localhost:8000/db/alice")
+            response = httpx.get("http://primary:8000/db/alice")
             data = response.json()
             CACHE["alice"] = data["visibility"]
             print("Cache updated:", CACHE)
@@ -32,7 +32,7 @@ def load_initial_snapshot():
 def consume():
     print("Starting RabbitMQ consumer..." )
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters("localhost")
+        pika.ConnectionParameters("rabbitmq")
     )
     channel = connection.channel()
 

@@ -41,7 +41,7 @@ Spec ==
     /\ WF_vars(Consume)
 
 
-ConsistentWhenQuiet ==
+Consistent ==
     (Len(queue) = 0) => (cache = db)
 
 

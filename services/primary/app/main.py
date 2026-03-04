@@ -1,9 +1,10 @@
 import pika
+import httpx
 import json
 from fastapi import FastAPI
 from typing import Dict
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI()
 # In-memory "database"
@@ -13,7 +14,7 @@ DB: Dict[str, str] = {
 
 def publish_event(user: str, visibility: str):
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters("localhost")
+        pika.ConnectionParameters("rabbitmq")
     )
     channel = connection.channel()
 
@@ -56,3 +57,8 @@ def set_visibility(user: str, visibility: str):
 def serve_ui():
     with open("ui/index.html") as f:
         return f.read()
+
+@app.get("/cache_proxy/{user}", response_class=HTMLResponse)
+def proxy_cache(user: str):
+    response = httpx.get(f"http://cache:8001/cache/{user}")
+    return response.text
